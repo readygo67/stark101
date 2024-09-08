@@ -9,7 +9,7 @@ def stark101_change_1_trace_value():
   trace_domain = build_trace_domain()  # [g^0,g^1,g^2,...,g^1023]
 
   f = build_polynomial(trace_domain[:-1], trace_value)
-  lde_domain = build_lde_domain()
+  lde_domain = build_lde_domain(8192, True)
   lde_value = build_lde_value(f, lde_domain)
   lde_tree = commit(lde_value)
   assert lde_tree.root == '6c266a104eeaceae93c14ad799ce595ec8c2764359d7ad1b4b7c57a4da52be04'

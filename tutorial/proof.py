@@ -104,5 +104,13 @@ class Proof:
 
     valid = (all(merkle_proof_valid) & same_lde_root & all(same_cp_root) & all(same_final_values) &
              trace_cp_valid & all(cp_layers_valid) & all(same_sibling_square))
+    print(f"merkle_proof_valid: {merkle_proof_valid}")
+    print(f"same_lde_root: {same_lde_root}")
+    print(f"same_cp_root: {same_cp_root}")
+    print(f"same_final_values: {same_final_values}")
+    print(f"trace_cp_valid: {trace_cp_valid}")
+    print(f"cp_layers_valid: {cp_layers_valid}")
+    print(f"same_sibling_square: {same_sibling_square}")
+    print(f"valid: {valid}")
     return valid
 

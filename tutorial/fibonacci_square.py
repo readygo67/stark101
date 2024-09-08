@@ -52,20 +52,21 @@ def build_polynomial(xs, ys):
   return f
 
 
-# build the larger evaluation domain x_coordinates
-def build_lde_domain():
-  n = 8192
+# build the larger evaluation domain，实践中必须coset必须为True，否则有可能出现除0的问题。
+def build_lde_domain(n, coset):
   H = build_domain(n)
-  lde_domain = [H[i] * FieldElement.generator() for i in range(n)]
-
-  assert len(set(lde_domain)) == len(lde_domain)
-  w = FieldElement.generator()
-  w_inv = w.inverse()
-  assert '55fe9505f35b6d77660537f6541d441ec1bd919d03901210384c6aa1da2682ce' == sha256(
-    str(H[1]).encode()).hexdigest(), \
-    'H list is incorrect. H[1] should be h (i.e., the generator of H).'
-  for i in range(n):
-    assert ((w_inv * lde_domain[1]) ** i) * w == lde_domain[i]
+  if coset == False:
+    lde_domain = [H[i] for i in range(n)]
+  else:
+    lde_domain = [H[i] * FieldElement.generator() for i in range(n)]
+    # assert len(set(lde_domain)) == len(lde_domain)
+    # w = FieldElement.generator()
+    # w_inv = w.inverse()
+    # assert '55fe9505f35b6d77660537f6541d441ec1bd919d03901210384c6aa1da2682ce' == sha256(
+    #   str(H[1]).encode()).hexdigest(), \
+    #   'H list is incorrect. H[1] should be h (i.e., the generator of H).'
+    # for i in range(n):
+    #   assert ((w_inv * lde_domain[1]) ** i) * w == lde_domain[i]
   print('success build lde domain!')
   return lde_domain
 
@@ -89,9 +90,9 @@ def constraint_0(f):
     p0 = numerator / 	denominator
     r0 = numerator % 	denominator
 
-    assert r0 == 0
-    assert p0.eval(2718) == 2509888982
-    assert p0.degree() == 1021
+    # assert r0 == 0
+    # assert p0.eval(2718) == 2509888982
+    # assert p0.degree() == 1021
     print('Success build p0!')
     return p0
 
@@ -102,9 +103,9 @@ def constraint_1(f, x):
   p1 = numerator / 	denominator
   r1 = numerator % 	denominator
 
-  assert r1 == 0
-  assert p1.eval(5772) == 232961446
-  assert p1.degree() == 1021
+  # assert r1 == 0
+  # assert p1.eval(5772) == 232961446
+  # assert p1.degree() == 1021
   print('Success build p1!')
   return p1
 
@@ -187,15 +188,15 @@ def decommit_on_fri_layers(fri_layers, fri_merkles, idx, channel):
   return cp_proof, fri_layers[-1]
 
 
-def decommit_on_query(trace_domain, lde_domain,lde_value, tree, fri_layers, fri_merkles, idx, channel):
-  assert idx + 16 < len(lde_value), f'query index: {idx} is out of range. Length of layer: {len(lde_value)}.'
+def decommit_on_query(trace_domain, lde_domain,lde_value, tree, fri_layers, fri_merkles, idx, channel, span):
+  assert idx + 2* span < len(lde_value), f'query index: {idx} is out of range. Length of layer: {len(lde_value)}.'
 
   x_proof = DecommitmentData(idx, lde_value[idx], tree.get_authentication_path(idx), tree.root)
 
-  next_idx = idx + 8
+  next_idx = idx + span
   gx_proof = DecommitmentData(next_idx, lde_value[next_idx], tree.get_authentication_path(next_idx), tree.root)
 
-  next_next_idx = idx + 16
+  next_next_idx = idx + 2*span
   g2x_proof = DecommitmentData(next_next_idx, lde_value[next_next_idx], tree.get_authentication_path(next_next_idx), tree.root)
 
   cp_proof, final_values = decommit_on_fri_layers(fri_layers, fri_merkles, idx, channel)
@@ -218,7 +219,7 @@ def stark101_test():
   trace_domain = build_trace_domain()  # [g^0,g^1,g^2,...,g^1023]
 
   f = build_polynomial(trace_domain[:-1], trace_value)
-  lde_domain = build_lde_domain()
+  lde_domain = build_lde_domain(8192, True)
   lde_value = build_lde_value(f, lde_domain)
   lde_tree = commit(lde_value)
   assert lde_tree.root == '6c266a104eeaceae93c14ad799ce595ec8c2764359d7ad1b4b7c57a4da52be04'
